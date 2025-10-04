@@ -104,7 +104,7 @@ class ProfileScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20.r),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.shadowColor.withOpacity(0.07),
+                      color: theme.shadowColor.withAlpha((0.07 * 255).round()),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -154,10 +154,10 @@ class ProfileScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16.r),
                         border: Border.all(
-                          color: theme.colorScheme.error.withOpacity(0.6),
+                          color: theme.colorScheme.error.withAlpha((0.6 * 255).round()),
                           width: 1.4,
                         ),
-                        color: theme.colorScheme.errorContainer.withOpacity(0.4),
+                        color: theme.colorScheme.errorContainer.withAlpha((0.4 * 255).round()),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -234,7 +234,7 @@ class _ProfileOption extends StatelessWidget {
               width: 40.w,
               height: 40.w,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(
@@ -275,7 +275,7 @@ class _ProfileDivider extends StatelessWidget {
       thickness: 1,
       indent: 20.w,
       endIndent: 20.w,
-      color: Theme.of(context).dividerColor.withOpacity(0.2),
+      color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round()),
     );
   }
 }

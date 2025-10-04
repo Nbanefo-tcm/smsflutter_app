@@ -190,10 +190,10 @@ class SmsFilterChips extends StatelessWidget {
           smsProvider.filterByDate(null);
         }
       },
-      backgroundColor: colorScheme.primary.withOpacity(0.12),
+      backgroundColor: colorScheme.primary.withAlpha((0.12 * 255).round()),
       selectedColor: colorScheme.primary,
       side: BorderSide(
-        color: colorScheme.primary.withOpacity(0.3),
+        color: colorScheme.primary.withAlpha((0.3 * 255).round()),
         width: 1,
       ),
     );

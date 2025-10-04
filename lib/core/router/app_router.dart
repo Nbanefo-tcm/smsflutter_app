@@ -39,12 +39,13 @@ class AppRouter {
       ShellRoute(
         builder: (context, state, child) => MainScreen(content: child),
         routes: [
+          // Empty route that will be handled by MainScreen's _buildHomeContent
           GoRoute(
             path: '/',
             name: 'home',
             pageBuilder: (context, state) => MaterialPage(
               key: state.pageKey,
-              child: const Center(child: Text('Home', key: Key('home_screen'))),
+              child: const SizedBox.shrink(),
             ),
           ),
           GoRoute(

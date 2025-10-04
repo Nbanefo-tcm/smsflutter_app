@@ -4,11 +4,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class ProfileAvatarButton extends StatelessWidget {
   final double size;
   final bool showBadge;
+  final Color? iconColor;
+  final Color? backgroundColor;
 
   const ProfileAvatarButton({
     super.key,
     this.size = 36,
     this.showBadge = false,
+    this.iconColor,
+    this.backgroundColor,
   });
 
   void _goToProfile(BuildContext context) {
@@ -31,11 +35,11 @@ class ProfileAvatarButton extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: (size.r / 2),
-              backgroundColor: theme.colorScheme.secondary.withOpacity(0.15),
+              backgroundColor: backgroundColor ?? Colors.grey[200],
               child: Icon(
                 Icons.person_outline,
                 size: (size - 12).sp,
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                color: iconColor ?? Colors.black,
               ),
             ),
             if (showBadge)

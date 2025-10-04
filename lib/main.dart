@@ -38,6 +38,11 @@ class MyApp extends StatelessWidget {
           ],
           child: Consumer<ThemeProvider>(
             builder: (context, themeProvider, child) {
+              // Set light theme as default for system preference
+              if (themeProvider.themeMode == ThemeMode.system) {
+                themeProvider.setThemeMode(ThemeMode.light);
+              }
+              
               return MaterialApp.router(
                 title: 'MSMmax - Virtual Phone Numbers',
                 theme: AppTheme.lightTheme,

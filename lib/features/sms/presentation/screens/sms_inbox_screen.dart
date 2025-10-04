@@ -96,7 +96,7 @@ class _SmsInboxScreenState extends State<SmsInboxScreen>
             },
           ),
           const ThemeSelector(),
-          const ProfileAvatarButton(size: 34),
+          const ProfileAvatarButton(size: 34, iconColor: Colors.black, backgroundColor: Colors.white),
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {

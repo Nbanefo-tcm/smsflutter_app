@@ -85,33 +85,53 @@ class _LoginScreenState extends State<LoginScreen> {
                 'Welcome Back',
                 style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: theme.brightness == Brightness.dark 
+                      ? Colors.white
+                      : textTheme.headlineMedium?.color,
                 ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8.h),
               Text(
                 'Sign in to continue',
-                style: textTheme.bodyMedium,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.white.withOpacity(0.9)
+                      : textTheme.bodyMedium?.color,
+                ),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 32.h),
-              // Logo and Title
+              // App Logo and Title
               Center(
                 child: Column(
                   children: [
-                    // Add your app logo here
-                    Icon(
-                      Icons.sms,
-                      size: 80.r,
-                      color: colorScheme.primary,
-                    ),
-                    SizedBox(height: 16.h),
-                    Text(
-                      'MSMmax',
-                      style: textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    // App Logo/Icon
+                    Container(
+                      width: 100,
+                      height: 100,
+                      margin: EdgeInsets.only(bottom: 16.h),
+                      decoration: BoxDecoration(
+                        color: theme.brightness == Brightness.dark 
+                            ? Colors.white.withOpacity(0.1) 
+                            : colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        image: const DecorationImage(
+                          image: AssetImage('assets/images/simmax_logo.png'),
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
+                    Text(
+                      'SimMAX',
+                      style: textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.brightness == Brightness.dark 
+                            ? Colors.white 
+                            : colorScheme.onBackground,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
                   ],
                 ),
               ),
@@ -231,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           "Don't have an account? ",
                           style: TextStyle(
                             fontSize: 14.sp,
-                            color: textTheme.bodyMedium?.color?.withOpacity(0.7),
+                            color: textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).round()),
                           ),
                         ),
                         TextButton(

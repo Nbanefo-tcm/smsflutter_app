@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
+
 import '../../../../core/widgets/profile_avatar_button.dart';
 
 class FundWalletScreen extends StatefulWidget {
@@ -11,10 +13,11 @@ class FundWalletScreen extends StatefulWidget {
 }
 
 class _FundWalletScreenState extends State<FundWalletScreen> {
-  String selectedTab = 'Crypto';
+  String selectedTab = 'All';
   String selectedPaymentMethod = 'Paystack';
   final TextEditingController _amountController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   final List<Map<String, dynamic>> paymentMethods = [
     {
@@ -22,24 +25,59 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
       'icon': FontAwesomeIcons.creditCard,
       'type': 'Card/Bank Transfer',
       'color': const Color(0xFF00B2FF),
+      'fee': '1.4% + ₦50',
+      'processingTime': 'Instant',
     },
     {
       'name': 'Flutterwave',
       'icon': FontAwesomeIcons.moneyBillWave,
       'type': 'Card/Bank Transfer',
       'color': const Color(0xFFFF9A00),
+      'fee': '1.4% + ₦50',
+      'processingTime': 'Instant',
     },
     {
       'name': 'Squad',
       'icon': FontAwesomeIcons.moneyCheckDollar,
       'type': 'Card/Bank Transfer',
       'color': const Color(0xFF6F42C1),
+      'fee': '1.5%',
+      'processingTime': '1-2 hours',
     },
     {
       'name': 'Cryptomus',
       'icon': FontAwesomeIcons.bitcoin,
       'type': 'Crypto',
       'color': const Color(0xFF00C853),
+      'fee': '0.8%',
+      'processingTime': '3-5 confirmations',
+    },
+  ];
+
+  final List<Map<String, dynamic>> recentTransactions = [
+    {
+      'id': 'TX-001',
+      'amount': 5000.00,
+      'status': 'Completed',
+      'date': DateTime.now().subtract(const Duration(hours: 2)),
+      'method': 'Paystack',
+      'type': 'Credit',
+    },
+    {
+      'id': 'TX-002',
+      'amount': 2500.00,
+      'status': 'Pending',
+      'date': DateTime.now().subtract(const Duration(days: 1)),
+      'method': 'Cryptomus',
+      'type': 'Credit',
+    },
+    {
+      'id': 'TX-003',
+      'amount': 1000.00,
+      'status': 'Failed',
+      'date': DateTime.now().subtract(const Duration(days: 2)),
+      'method': 'Flutterwave',
+      'type': 'Credit',
     },
   ];
 
@@ -47,6 +85,46 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
   void dispose() {
     _amountController.dispose();
     super.dispose();
+  }
+
+  void _selectPaymentMethod(String method) {
+    setState(() {
+      selectedPaymentMethod = method;
+    });
+  }
+
+  void _handleProceedToPay() {
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Simulate API call
+      Future.delayed(const Duration(seconds: 2), () {
+        setState(() {
+          _isLoading = false;
+        });
+        _showPaymentSuccessDialog();
+      });
+    }
+  }
+
+  void _showPaymentSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Payment Successful'),
+        content: Text(
+          'Your wallet has been credited with \$${_amountController.text} via $selectedPaymentMethod',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -79,7 +157,7 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: const [
-          ProfileAvatarButton(size: 34),
+          ProfileAvatarButton(showBadge: true, iconColor: Colors.black, backgroundColor: Colors.white),
         ],
         elevation: 0,
       ),
@@ -108,14 +186,138 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               
               SizedBox(height: 24.h),
               
-              // Payment Method Selection
+              // Amount Input
               Text(
-                'Select Payment Method',
+                'Enter Amount (USD)',
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
                   color: textTheme.titleMedium?.color,
                 ),
+              ),
+              
+              SizedBox(height: 8.h),
+              
+              // Amount Input with Validation
+              TextFormField(
+                controller: _amountController,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an amount';
+                  }
+                  final amount = double.tryParse(value) ?? 0;
+                  if (amount <= 0) {
+                    return 'Amount must be greater than 0';
+                  }
+                  if (amount > 10000) {
+                    return 'Maximum amount is \$10,000';
+                  }
+                  return null;
+                },
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: textTheme.bodyLarge?.color,
+                ),
+                decoration: InputDecoration(
+                  hintText: '0.00',
+                  hintStyle: TextStyle(
+                    color: theme.hintColor.withOpacity(0.5),
+                    fontSize: 18.sp,
+                  ),
+                  prefix: Padding(
+                    padding: EdgeInsets.only(right: 8.w),
+                    child: Text(
+                      '\$',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: theme.cardColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: theme.dividerColor,
+                      width: 1.0,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: theme.dividerColor,
+                      width: 1.0,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: colorScheme.primary,
+                      width: 1.5,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    borderSide: BorderSide(
+                      color: colorScheme.error,
+                      width: 1.0,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 18.h,
+                  ),
+                  suffixIcon: Container(
+                    margin: EdgeInsets.all(8.w),
+                    padding: EdgeInsets.symmetric(horizontal: 8.w),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'USD',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  errorStyle: TextStyle(
+                    fontSize: 12.sp,
+                    color: colorScheme.error,
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: 24.h),
+              
+              // Payment Method Selection
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Payment Method',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: textTheme.titleMedium?.color,
+                    ),
+                  ),
+                  Text(
+                    '${filteredMethods.length} options',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: theme.hintColor,
+                    ),
+                  ),
+                ],
               ),
               
               SizedBox(height: 12.h),
@@ -138,6 +340,8 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
                     title: method['name'],
                     icon: method['icon'],
                     color: method['color'],
+                    fee: method['fee'],
+                    processingTime: method['processingTime'],
                     isSelected: selectedPaymentMethod == method['name'],
                     onTap: () => _selectPaymentMethod(method['name']),
                   );
@@ -146,132 +350,108 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               
               SizedBox(height: 24.h),
               
-              // Amount Input
-              Text(
-                'Enter Amount (USD)',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: textTheme.titleMedium?.color,
-                ),
-              ),
-              
-              SizedBox(height: 12.h),
-              
-              TextFormField(
-                controller: _amountController,
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: textTheme.bodyLarge?.color,
-                ),
-                decoration: InputDecoration(
-                  hintText: '0.00',
-                  hintStyle: TextStyle(
-                    color: theme.hintColor.withOpacity(0.5),
-                  ),
-                  prefix: Text(
-                    '\$',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  filled: true,
-                  fillColor: theme.cardColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 16.h,
-                  ),
-                  suffixIcon: Padding(
-                    padding: EdgeInsets.all(12.w),
-                    child: Text(
-                      'USD',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: theme.hintColor,
-                      ),
-                    ),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an amount';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  if (double.parse(value) <= 0) {
-                    return 'Amount must be greater than 0';
-                  }
-                  return null;
-                },
-              ),
-              
-              SizedBox(height: 32.h),
-              
-              // Proceed to Payment Button
+              // Proceed to Pay Button
               SizedBox(
                 width: double.infinity,
-                height: 56.h,
                 child: ElevatedButton(
-                  onPressed: _proceedToPayment,
+                  onPressed: _isLoading ? null : _handleProceedToPay,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
-                    'Proceed to Payment',
+                  child: _isLoading
+                      ? SizedBox(
+                          width: 24.w,
+                          height: 24.h,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : Text(
+                          'Proceed to Pay',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+              
+              SizedBox(height: 32.h),
+              
+              // Recent Transactions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Recent Transactions',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: colorScheme.onPrimary,
+                      color: textTheme.titleMedium?.color,
                     ),
                   ),
-                ),
-              ),
-              
-              SizedBox(height: 16.h),
-              
-              // Note Section
-              Container(
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: colorScheme.primary,
-                      size: 20.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        selectedPaymentMethod == 'Cryptomus'
-                            ? 'Please ensure that you send the exact amount in the selected cryptocurrency to the provided wallet address. The conversion rate is locked for 15 minutes.'
-                            : 'You will be redirected to the selected payment gateway to complete your transaction securely.',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: textTheme.bodyMedium?.color,
-                          height: 1.5,
-                        ),
+                  TextButton(
+                    onPressed: () {
+                      // Navigate to full transactions screen
+                    },
+                    child: Text(
+                      'View All',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: colorScheme.primary,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              
+              SizedBox(height: 12.h),
+              
+              // Transactions List
+              if (recentTransactions.isNotEmpty) ...[
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: recentTransactions.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final transaction = recentTransactions[index];
+                    return _buildTransactionItem(context, transaction);
+                  },
+                ),
+              ] else ...[
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.receipt_long_outlined,
+                        size: 48.sp,
+                        color: theme.hintColor.withOpacity(0.5),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'No recent transactions',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: theme.hintColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -279,35 +459,16 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     );
   }
 
-  Widget _buildTabButton(String title, IconData icon) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final isSelected = selectedTab == title;
+  Widget _buildTabButton(String label, IconData icon) {
+    final isSelected = selectedTab == label;
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedTab = title;
-            // Reset selected payment method when changing tabs
-            final availableMethods = paymentMethods.where((method) => 
-              title == 'All' || 
-              (title == 'Crypto' && method['type'] == 'Crypto') ||
-              (title == 'Card' && method['type'] == 'Card/Bank Transfer')
-            ).toList();
-            
-            if (!availableMethods.any((m) => m['name'] == selectedPaymentMethod)) {
-              selectedPaymentMethod = availableMethods.isNotEmpty 
-                  ? availableMethods.first['name'] 
-                  : '';
-            }
-          });
-        },
+      child: InkWell(
+        onTap: () => setState(() => selectedTab = label),
+        borderRadius: BorderRadius.circular(12.r),
         child: Container(
-          margin: EdgeInsets.all(4.w),
           decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(8.r),
+            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(12.r),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -315,17 +476,15 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
               Icon(
                 icon,
                 size: 16.sp,
-                color: isSelected ? colorScheme.onPrimary : theme.hintColor,
+                color: isSelected ? Colors.white : Theme.of(context).hintColor,
               ),
-              if (title != 'All') SizedBox(width: 4.w),
-              if (title != 'All') Text(
-                title,
+              SizedBox(width: 4.w),
+              Text(
+                label,
                 style: TextStyle(
                   fontSize: 12.sp,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? colorScheme.onPrimary
-                      : textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : Theme.of(context).hintColor,
                 ),
               ),
             ],
@@ -340,69 +499,77 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     required String title,
     required IconData icon,
     required Color color,
+    required String fee,
+    required String processingTime,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    final theme = Theme.of(context);
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
       child: Container(
         padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
           color: isSelected
               ? color.withOpacity(0.1)
-              : Theme.of(context).cardColor,
+              : theme.cardColor,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: isSelected ? color : Theme.of(context).dividerColor,
-            width: isSelected ? 1.5 : 1,
+            color: isSelected
+                ? color
+                : theme.dividerColor,
+            width: isSelected ? 1.5 : 1.0,
           ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: color.withOpacity(0.2),
-                blurRadius: 8.0,
-                offset: const Offset(0, 2),
-              ),
-          ],
         ),
         child: Row(
           children: [
             Container(
-              width: 36.w,
-              height: 36.w,
+              width: 40.w,
+              height: 40.w,
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8.r),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 18.sp,
+              child: Icon(icon, color: color, size: 20.sp),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'Fee: $fee',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: theme.hintColor,
+                    ),
+                  ),
+                  Text(
+                    'Process: $processingTime',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: theme.hintColor,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(width: 8.w),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-            ),
-            const Spacer(),
             if (isSelected)
-              Container(
-                width: 20.w,
-                height: 20.w,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check,
-                  size: 14.sp,
-                  color: Colors.white,
-                ),
+              Icon(
+                Icons.check_circle,
+                color: color,
+                size: 20.sp,
               ),
           ],
         ),
@@ -410,205 +577,112 @@ class _FundWalletScreenState extends State<FundWalletScreen> {
     );
   }
 
-  void _selectPaymentMethod(String method) {
-    setState(() {
-      selectedPaymentMethod = method;
-    });
-  }
-
-  void _proceedToPayment() {
-    if (_formKey.currentState?.validate() ?? false) {
-      if (selectedPaymentMethod == 'Cryptomus') {
-        // Show crypto payment dialog
-        _showCryptoPaymentDialog();
-      } else {
-        // For other payment methods, show processing dialog
-        _showProcessingDialog();
-      }
-    }
-  }
-
-  void _showCryptoPaymentDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Pay with $selectedPaymentMethod',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Send ${_amountController.text} USD worth of $selectedPaymentMethod to the following address:',
-              style: TextStyle(fontSize: 14.sp),
-            ),
-            SizedBox(height: 16.h),
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: SelectableText(
-                '3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              'Amount in $selectedPaymentMethod:',
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              _calculateCryptoAmount(),
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              'Scan QR Code:',
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8.h),
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.qr_code,
-                  size: 120.w,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              'Note: The conversion rate is locked for 15 minutes. Please complete the payment within this time.',
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel', style: TextStyle(fontSize: 14.sp)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Payment address copied to clipboard'),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                ),
-              );
-            },
-            child: Text('Copy Address', style: TextStyle(fontSize: 14.sp)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showProcessingDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              'Redirecting to $selectedPaymentMethod...',
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-
-    // Simulate payment processing
-    Future.delayed(const Duration(seconds: 2), () {
-      if (context.mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-        _showPaymentSuccessDialog();
-      }
-    });
-  }
-
-  void _showPaymentSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Icon(
-          Icons.check_circle,
-          color: Theme.of(context).colorScheme.primary,
-          size: 48.sp,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Payment Successful!',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Your wallet has been credited with \$${_amountController.text}',
-              style: TextStyle(fontSize: 14.sp),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop(); // Go back to previous screen
-            },
-            child: Text('Done', style: TextStyle(fontSize: 14.sp)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _calculateCryptoAmount() {
-    // This is a mock calculation - in a real app, you would use current exchange rates
-    final amount = double.tryParse(_amountController.text) ?? 0;
-    double cryptoAmount = 0;
+  Widget _buildTransactionItem(
+    BuildContext context,
+    Map<String, dynamic> transaction,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isCredit = transaction['type'] == 'Credit';
+    final isCompleted = transaction['status'] == 'Completed';
+    final isPending = transaction['status'] == 'Pending';
     
-    switch (selectedPaymentMethod) {
-      case 'Cryptomus':
-        cryptoAmount = amount / 50000; // Example rate for Bitcoin
-        return '$cryptoAmount BTC';
-      default:
-        return '\$$amount';
-    }
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40.w,
+            height: 40.w,
+            decoration: BoxDecoration(
+              color: isCredit
+                  ? colorScheme.primary.withOpacity(0.1)
+                  : colorScheme.error.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Icon(
+              isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+              color: isCredit ? colorScheme.primary : colorScheme.error,
+              size: 20.sp,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${transaction['method']} • ${transaction['id']}',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: theme.hintColor,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  DateFormat('MMM d, y • h:mm a').format(transaction['date']),
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: theme.hintColor.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${isCredit ? '+' : '-'}\$${transaction['amount'].toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isCredit ? colorScheme.primary : colorScheme.error,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8.w,
+                  vertical: 2.h,
+                ),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? Colors.green.withOpacity(0.1)
+                      : isPending
+                          ? Colors.orange.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: Text(
+                  transaction['status'],
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: isCompleted
+                        ? Colors.green
+                        : isPending
+                            ? Colors.orange
+                            : Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
+}
+
+// Extension to format date
+final DateFormat _dateFormat = DateFormat('MMM d, y • h:mm a');
+
+extension DateTimeExtension on DateTime {
+  String get formatted => _dateFormat.format(this);
 }
