@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/widgets/theme_selector.dart';
-import '../../../../core/widgets/profile_avatar_button.dart';
 import '../../data/models/sms_message_model.dart';
 import '../providers/sms_provider.dart';
 import '../widgets/sms_message_card.dart';
-import '../widgets/sms_search_bar.dart';
 import '../widgets/sms_filter_chips.dart';
-import '../../../main/presentation/widgets/navigation_drawer.dart';
 
 class SmsInboxScreen extends StatefulWidget {
   const SmsInboxScreen({super.key});
@@ -23,7 +19,6 @@ class _SmsInboxScreenState extends State<SmsInboxScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   final ScrollController _scrollController = ScrollController();
-  bool _showSearchBar = false;
 
   @override
   void initState() {
@@ -60,177 +55,163 @@ class _SmsInboxScreenState extends State<SmsInboxScreen>
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      drawer: const AppNavigationDrawer(),
-      appBar: AppBar(
-        title: Consumer<SmsProvider>(
-          builder: (context, smsProvider, child) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('SMS Inbox'),
-                if (smsProvider.totalMessages > 0)
-                  Text(
-                    '${smsProvider.totalMessages} messages • ${smsProvider.unreadCount} unread',
-                    style: textTheme.bodySmall?.copyWith(
-                      fontSize: 12.sp,
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.normal,
+    return Consumer<SmsProvider>(
+      builder: (context, smsProvider, _) {
+        return FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            children: [
+              // Header with unread count and actions
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Inbox',
+                          style: textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${smsProvider.unreadCount} unread',
+                          style: textTheme.bodySmall?.copyWith(
+                            fontSize: 12.sp,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
+                    // Search and menu buttons
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () {
+                            if (context.mounted) {
+                              showSearch(
+                                context: context,
+                                delegate: _SmsSearchDelegate(smsProvider),
+                              );
+                            }
+                          },
+                        ),
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'mark_all_read':
+                                smsProvider.markAllAsRead();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('All messages marked as read'),
+                                  ),
+                                );
+                                break;
+                              case 'clear_filters':
+                                smsProvider.clearFilters();
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'mark_all_read',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.mark_email_read, size: 20),
+                                  SizedBox(width: 12),
+                                  Text('Mark all as read'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'clear_filters',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.clear_all, size: 20),
+                                  SizedBox(width: 12),
+                                  Text('Clear filters'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Filter Chips
+              const SmsFilterChips(),
+              
+              // Messages List
+              Expanded(
+                child: smsProvider.isLoading && smsProvider.messages.isEmpty
+                    ? _buildLoadingState()
+                    : smsProvider.error != null
+                        ? _buildErrorState(smsProvider.error!)
+                        : smsProvider.messages.isEmpty
+                            ? _buildEmptyState()
+                            : RefreshIndicator(
+                                onRefresh: smsProvider.refreshMessages,
+                                child: ListView.builder(
+                                  controller: _scrollController,
+                                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                                  itemCount: smsProvider.messages.length,
+                                  itemBuilder: (context, index) {
+                                    final message = smsProvider.messages[index];
+                                    return AnimatedBuilder(
+                                      animation: _animationController,
+                                      builder: (context, child) {
+                                        final slideAnimation = Tween<Offset>(
+                                          begin: const Offset(1.0, 0.0),
+                                          end: Offset.zero,
+                                        ).animate(CurvedAnimation(
+                                          parent: _animationController,
+                                          curve: Interval(
+                                            (index * 0.1).clamp(0.0, 1.0),
+                                            ((index * 0.1) + 0.3).clamp(0.0, 1.0),
+                                            curve: Curves.easeOutBack,
+                                          ),
+                                        ));
+
+                                        return SlideTransition(
+                                          position: slideAnimation,
+                                          child: SmsMessageCard(
+                                            message: message,
+                                            onTap: () => _onMessageTap(message),
+                                            onLongPress: () => _onMessageLongPress(message),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+              ),
+              
+              // Floating Action Button
+              if (smsProvider.unreadCount > 0)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FloatingActionButton.extended(
+                    onPressed: () {
+                      smsProvider.markAllAsRead();
+                      HapticFeedback.lightImpact();
+                    },
+                    icon: const Icon(Icons.mark_email_read),
+                    label: Text('Mark ${smsProvider.unreadCount} as read'),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
-              ],
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(_showSearchBar ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _showSearchBar = !_showSearchBar;
-                if (!_showSearchBar) {
-                  context.read<SmsProvider>().searchMessages('');
-                }
-              });
-            },
-          ),
-          const ThemeSelector(),
-          const ProfileAvatarButton(size: 34, iconColor: Colors.black, backgroundColor: Colors.white),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'mark_all_read':
-                  context.read<SmsProvider>().markAllAsRead();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('All messages marked as read'),
-                    ),
-                  );
-                  break;
-                case 'clear_filters':
-                  context.read<SmsProvider>().clearFilters();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'mark_all_read',
-                child: Row(
-                  children: [
-                    Icon(Icons.mark_email_read),
-                    SizedBox(width: 8),
-                    Text('Mark all as read'),
-                  ],
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'clear_filters',
-                child: Row(
-                  children: [
-                    Icon(Icons.clear_all),
-                    SizedBox(width: 8),
-                    Text('Clear filters'),
-                  ],
-                ),
-              ),
             ],
           ),
-        ],
-      ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            // Search Bar
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              height: _showSearchBar ? 60.h : 0,
-              child: _showSearchBar
-                  ? Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      child: const SmsSearchBar(),
-                    )
-                  : null,
-            ),
-            
-            // Filter Chips
-            const SmsFilterChips(),
-            
-            // Messages List
-            Expanded(
-              child: Consumer<SmsProvider>(
-                builder: (context, smsProvider, child) {
-                  if (smsProvider.isLoading && smsProvider.messages.isEmpty) {
-                    return _buildLoadingState();
-                  }
-
-                  if (smsProvider.error != null) {
-                    return _buildErrorState(smsProvider.error!);
-                  }
-
-                  if (smsProvider.messages.isEmpty) {
-                    return _buildEmptyState();
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: smsProvider.refreshMessages,
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      itemCount: smsProvider.messages.length,
-                      itemBuilder: (context, index) {
-                        final message = smsProvider.messages[index];
-                        return AnimatedBuilder(
-                          animation: _animationController,
-                          builder: (context, child) {
-                            final slideAnimation = Tween<Offset>(
-                              begin: const Offset(1.0, 0.0),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                              parent: _animationController,
-                              curve: Interval(
-                                (index * 0.1).clamp(0.0, 1.0),
-                                ((index * 0.1) + 0.3).clamp(0.0, 1.0),
-                                curve: Curves.easeOutBack,
-                              ),
-                            ));
-
-                            return SlideTransition(
-                              position: slideAnimation,
-                              child: SmsMessageCard(
-                                message: message,
-                                onTap: () => _onMessageTap(message),
-                                onLongPress: () => _onMessageLongPress(message),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: Consumer<SmsProvider>(
-        builder: (context, smsProvider, child) {
-          if (smsProvider.unreadCount > 0) {
-            return FloatingActionButton.extended(
-              onPressed: () {
-                smsProvider.markAllAsRead();
-                HapticFeedback.lightImpact();
-              },
-              icon: const Icon(Icons.mark_email_read),
-              label: Text('Mark ${smsProvider.unreadCount} as read'),
-              backgroundColor: colorScheme.primary,
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+        );
+      },
     );
   }
 
@@ -263,44 +244,37 @@ class _SmsInboxScreenState extends State<SmsInboxScreen>
     final colorScheme = theme.colorScheme;
 
     return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64.sp,
-              color: colorScheme.error,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48,
+            color: colorScheme.error,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Error loading messages',
+            style: textTheme.titleMedium?.copyWith(
+              color: colorScheme.onErrorContainer,
             ),
-            SizedBox(height: 16.h),
-            Text(
-              'Oops! Something went wrong',
-              style: textTheme.titleLarge?.copyWith(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            error,
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
             ),
-            SizedBox(height: 8.h),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: textTheme.bodyMedium?.copyWith(
-                fontSize: 14.sp,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            SizedBox(height: 24.h),
-            ElevatedButton.icon(
-              onPressed: () {
-                context.read<SmsProvider>().loadMessages();
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
-            ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              context.read<SmsProvider>().loadMessages();
+            },
+            child: const Text('Try Again'),
+          ),
+        ],
       ),
     );
   }
@@ -607,56 +581,54 @@ class _SmsInboxScreenState extends State<SmsInboxScreen>
   void _showMessageOptions(SmsMessageModel message) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.copy),
+            title: const Text('Copy message'),
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: message.message));
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Message copied!')),
+              );
+            },
+          ),
+          if (message.verificationCode != null && message.verificationCode!.isNotEmpty)
             ListTile(
-              leading: const Icon(Icons.copy),
-              title: const Text('Copy message'),
+              leading: const Icon(Icons.security),
+              title: const Text('Copy verification code'),
               onTap: () {
-                Clipboard.setData(ClipboardData(text: message.message));
+                Clipboard.setData(
+                  ClipboardData(text: message.verificationCode!),  
+                );
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Message copied!')),
+                  const SnackBar(content: Text('Verification code copied!')),
                 );
               },
             ),
-            if (message.hasVerificationCode)
-              ListTile(
-                leading: const Icon(Icons.security),
-                title: const Text('Copy verification code'),
-                onTap: () {
-                  Clipboard.setData(
-                    ClipboardData(text: message.verificationCode!),
-                  );
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Verification code copied!')),
-                  );
-                },
-              ),
-            ListTile(
-              leading: Icon(
-                message.isRead ? Icons.mark_email_unread : Icons.mark_email_read,
-              ),
-              title: Text(message.isRead ? 'Mark as unread' : 'Mark as read'),
-              onTap: () {
-                context.read<SmsProvider>().markAsRead(message.id);
-                Navigator.pop(context);
-              },
+          ListTile(
+            leading: Icon(
+              message.isRead ? Icons.mark_email_unread : Icons.mark_email_read,
             ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete message', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-                _confirmDelete(message);
-              },
-            ),
-          ],
-        ),
+            title: Text(message.isRead ? 'Mark as unread' : 'Mark as read'),
+            onTap: () {
+              context.read<SmsProvider>().markAsRead(message.id);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete, color: Colors.red),
+            title: const Text('Delete message', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              Navigator.pop(context);
+              _confirmDelete(message);
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -666,7 +638,7 @@ class _SmsInboxScreenState extends State<SmsInboxScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Message'),
-        content: const Text('Are you sure you want to delete this message? This action cannot be undone.'),
+        content: const Text('Are you sure you want to delete this message?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -680,8 +652,116 @@ class _SmsInboxScreenState extends State<SmsInboxScreen>
                 const SnackBar(content: Text('Message deleted')),
               );
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SmsSearchDelegate extends SearchDelegate<String> {
+  final SmsProvider smsProvider;
+  
+  _SmsSearchDelegate(this.smsProvider);
+  
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+  
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, '');
+      },
+    );
+  }
+  
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildSearchResults();
+  }
+  
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    if (query.isEmpty) {
+      return _buildEmptyState(context);
+    }
+    return _buildSearchResults();
+  }
+  
+  Widget _buildSearchResults() {
+    return Consumer<SmsProvider>(
+      builder: (context, smsProvider, _) {
+        // Search through messages
+        final queryLower = query.toLowerCase();
+        final results = smsProvider.messages.where((message) => 
+          message.message.toLowerCase().contains(queryLower) ||
+          message.sender.toLowerCase().contains(queryLower)
+        ).toList();
+        
+        if (results.isEmpty) {
+          return _buildEmptyState(context);
+        }
+        
+        return ListView.builder(
+          itemCount: results.length,
+          itemBuilder: (context, index) {
+            final message = results[index];
+            return ListTile(
+              title: Text(message.sender.isNotEmpty ? message.sender : 'Unknown Sender'),
+              subtitle: Text(
+                message.message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () {
+                close(context, message.id.toString());
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+  
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final colorScheme = theme.colorScheme;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 64,
+            color: colorScheme.onSurfaceVariant.withAlpha((0.5 * 255).round()),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No results found',
+            style: textTheme.titleMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try different search terms',
+            style: textTheme.bodyMedium?.copyWith(
+color: colorScheme.onSurfaceVariant.withAlpha((0.7 * 255).round()),
+            ),
           ),
         ],
       ),

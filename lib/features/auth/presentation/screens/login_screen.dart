@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontWeight: FontWeight.bold,
                         color: theme.brightness == Brightness.dark 
                             ? Colors.white 
-                            : colorScheme.onBackground,
+                            : colorScheme.onSurface,
                       ),
                     ),
                     SizedBox(height: 16.h),

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../../core/widgets/theme_selector.dart';
 import '../../../../core/widgets/profile_avatar_button.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/navigation_drawer.dart';
-import '../widgets/service_card.dart';
+import '../widgets/dashboard_page.dart' as dashboard;
 
 class MainScreen extends StatefulWidget {
   final Widget? content;
@@ -22,252 +20,121 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  final PageController _pageController = PageController();
 
-  final List<Map<String, dynamic>> _services = [
-    {
-      'title': 'SMS',
-      'icon': Icons.sms_outlined,
-      'color': AppColors.primary,
-      'route': '/sms-inbox',
-    },
-    {
-      'title': 'Rent Number',
-      'icon': Icons.phone_android_outlined,
-      'color': AppColors.success,
-      'route': '/rent-number',
-    },
-    {
-      'title': 'My eSIM',
-      'icon': Icons.sim_card_outlined,
-      'color': AppColors.accent,
-      'route': '/my-esim',
-    },
-    {
-      'title': 'eSIM Plans',
-      'icon': Icons.credit_card_outlined,
-      'color': AppColors.warning,
-      'route': '/esim-plans',
-    },
-    {
-      'title': 'API Docs',
-      'icon': Icons.api_outlined,
-      'color': AppColors.error,
-      'route': '/api-docs',
-    },
-    {
-      'title': 'Tutorials',
-      'icon': Icons.school_outlined,
-      'color': AppColors.info,
-      'route': '/tutorials',
-    },
+  final List<Widget> _pages = [
+    const dashboard.DashboardPage(),
+    const Center(child: Text('SMS')),
+    const Center(child: Text('Transactions')),
+    const Center(child: Text('Rent')),
+    const Center(child: Text('eSIM')),
+  ];
+
+  final List<BottomNavigationBarItem> _bottomNavItems = const [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.home_outlined),
+      activeIcon: Icon(Icons.home),
+      label: 'Home',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.sms_outlined),
+      activeIcon: Icon(Icons.sms),
+      label: 'SMS',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.receipt_long_outlined),
+      activeIcon: Icon(Icons.receipt_long),
+      label: 'Transactions',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.paid_outlined),
+      activeIcon: Icon(Icons.paid),
+      label: 'Rent',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.sim_card_outlined),
+      activeIcon: Icon(Icons.sim_card),
+      label: 'eSIM',
+    ),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    
+    // Only update the page controller if we're using the PageView
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(index);
+    }
+    
+    // Update the URL to match the selected tab
+    final routes = ['/', '/sms', '/transactions', '/rent', '/esim'];
+    if (index < routes.length) {
+      GoRouter.of(context).go(routes[index]);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
+    // If we have content from the router, use it, otherwise use our PageView
+    final bodyContent = widget.content ?? _buildDefaultContent();
+    
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       drawer: const AppNavigationDrawer(),
       appBar: AppBar(
-        backgroundColor: theme.appBarTheme.backgroundColor,
+        title: const Text(
+          'SimMAX',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
+            icon: const Icon(Icons.menu, size: 24),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: Row(
-          children: [
-            Container(
-              width: 24.w,
-              height: 24.h,
-              decoration: BoxDecoration(
-                color: colorScheme.primary,
-                borderRadius: BorderRadius.circular(6.r),
-                image: const DecorationImage(
-                  image: AssetImage('assets/images/simmax_logo.png'),
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            SizedBox(width: 8.w),
-            Text(
-              'SimMAX',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: theme.appBarTheme.foregroundColor,
-              ),
+        actions: const [
+          ThemeSelector(),
+          SizedBox(width: 8),
+          ProfileAvatarButton(),
+          SizedBox(width: 8),
+        ],
+      ),
+      body: bodyContent,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.shadow.withAlpha(25),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
             ),
           ],
         ),
-        actions: [
-          const ProfileAvatarButton(iconColor: Colors.black),
-          const ThemeSelector(),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-              await authProvider.logout();
-            },
-          ),
-        ],
-      ),
-      body: widget.content ?? _buildHomeContent(context),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.swap_horiz_outlined),
-            label: 'Transaction',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: colorScheme.primary,
-        unselectedItemColor: colorScheme.onSurfaceVariant,
-        backgroundColor: theme.bottomNavigationBarTheme.backgroundColor ?? theme.colorScheme.surface,
-        elevation: 8,
-        showUnselectedLabels: true,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF4E73DF),
+          unselectedItemColor: Colors.grey,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedLabelStyle: const TextStyle(fontSize: 12, height: 2),
+          unselectedLabelStyle: const TextStyle(fontSize: 12, height: 2),
+          items: _bottomNavItems,
+        ),
       ),
     );
   }
 
-  Widget _buildHomeContent(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Welcome Section
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20.w),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withAlpha((0.08 * 255).round()),
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(
-                color: colorScheme.primary.withAlpha((0.1 * 255).round()),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(12.r),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withAlpha((0.1 * 255).round()),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.waving_hand_outlined,
-                    size: 24.sp,
-                    color: colorScheme.primary,
-                  ),
-                ),
-                SizedBox(width: 16.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome back!',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: theme.brightness == Brightness.dark 
-                              ? Colors.white.withOpacity(0.9)
-                              : colorScheme.onSurface.withOpacity(0.8),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        'Explore our services',
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.brightness == Brightness.dark 
-                              ? Colors.white 
-                              : colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          SizedBox(height: 28.h),
-          
-          // Services Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Services',
-                style: textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 20.sp,
-                ),
-              ),
-              Text(
-                '${_services.length} services',
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withAlpha((0.6 * 255).round()),
-                ),
-              ),
-            ],
-          ),
-          
-          SizedBox(height: 20.h),
-          
-          // Services Grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16.w,
-              mainAxisSpacing: 16.h,
-              childAspectRatio: 1.1,
-            ),
-            itemCount: _services.length,
-            itemBuilder: (context, index) {
-              final service = _services[index];
-              return ServiceCard(
-                title: service['title'],
-                icon: service['icon'],
-                color: service['color'],
-                onTap: () {
-                  Navigator.pushNamed(context, service['route']);
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    );
+  Widget _buildDefaultContent() {
+    // This is the default content when no route is specified
+    return _pages[_selectedIndex];
   }
 }

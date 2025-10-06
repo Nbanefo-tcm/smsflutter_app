@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -10,198 +11,228 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        centerTitle: true,
-        title: Text(
-          'Profile',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        elevation: 0,
-      ),
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
-                  final user = authProvider.user;
-                  return Container(
-                    padding: EdgeInsets.all(16.w),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(20.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.shadowColor.withValues(alpha: 0.07),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+              // Header with back button and title
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                      onPressed: () => context.pop(),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 32.r,
-                          backgroundColor: theme.colorScheme.secondary.withValues(alpha: 0.12),
-                          child: Icon(
-                            Icons.person_outline,
-                            size: 32.sp,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
-                          ),
-                        ),
-                        SizedBox(width: 16.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user?.name?.isNotEmpty == true ? user!.name! : 'Madmaxpro',
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: theme.textTheme.titleLarge?.color,
-                                ),
-                              ),
-                              SizedBox(height: 4.h),
-                              Text(
-                                'Profile Information',
-                                style: TextStyle(
-                                  fontSize: 13.sp,
-                                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right,
-                          color: theme.hintColor,
-                        ),
-                      ],
+                    SizedBox(width: 8.w),
+                    Text(
+                      'Profile',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
 
-              SizedBox(height: 24.h),
-
+              // User Info Card
               Container(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
+                margin: EdgeInsets.all(16.w),
+                padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(20.r),
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.shadowColor.withAlpha((0.07 * 255).round()),
-                      blurRadius: 12,
+                      color: Colors.black.withAlpha(12), // 0.05 * 255 ≈ 12
+                      blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: Column(
-                  children: const [
-                    _ProfileOption(
-                      icon: Icons.lock_outline,
-                      title: 'Password',
-                    ),
-                    _ProfileDivider(),
-                    _ProfileOption(
-                      icon: Icons.card_giftcard_outlined,
-                      title: 'Referral & Rewards',
-                    ),
-                    _ProfileDivider(),
-                    _ProfileOption(
-                      icon: Icons.palette_outlined,
-                      title: 'Appearance',
-                    ),
-                    _ProfileDivider(),
-                    _ProfileOption(
-                      icon: Icons.help_outline,
-                      title: 'Help & Support',
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 28.h),
-
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
-                  return GestureDetector(
-                    onTap: () async {
-                      await authProvider.logout();
-                      if (context.mounted) {
-                        Navigator.of(context)
-                          ..pop()
-                          ..pushReplacementNamed('/login');
-                      }
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                child: Row(
+                  children: [
+                    // User Avatar
+                    Container(
+                      width: 70.w,
+                      height: 70.w,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(
-                          color: theme.colorScheme.error.withAlpha((0.6 * 255).round()),
-                          width: 1.4,
-                        ),
-                        color: theme.colorScheme.errorContainer.withAlpha((0.4 * 255).round()),
+                        shape: BoxShape.circle,
+                        color: colorScheme.primary.withAlpha(26), // 0.1 * 255 ≈ 26
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Icon(
+                        Icons.person_outline,
+                        size: 32.sp,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    // User Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.logout,
-                            color: theme.colorScheme.error,
-                          ),
-                          SizedBox(width: 8.w),
                           Text(
-                            'Logout',
+                            'Madmaxpro',
                             style: TextStyle(
-                              fontSize: 15.sp,
+                              fontSize: 18.sp,
                               fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.error,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            'madmaxpro@example.com',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: colorScheme.onSurface.withAlpha(153), // 0.6 * 255 ≈ 153
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
+                    // Edit Button
+                    IconButton(
+                      onPressed: () {},
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 20.sp,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-              SizedBox(height: 32.h),
-
-              Center(
-                child: Wrap(
-                  spacing: 16.w,
-                  runSpacing: 8.h,
+              // Menu Items
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(12), // 0.05 * 255 ≈ 12
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
                   children: [
-                    _FooterLink(
-                      label: 'Help & Support',
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.person_outline,
+                      title: 'Account Information',
                       onTap: () {},
                     ),
-                    _FooterLink(
-                      label: 'Terms of Service',
+                    _buildDivider(context),
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.lock_outline,
+                      title: 'Change Password',
                       onTap: () {},
                     ),
-                    _FooterLink(
-                      label: 'Privacy Policy',
+                    _buildDivider(context),
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.payment_outlined,
+                      title: 'Payment Methods',
+                      onTap: () {},
+                    ),
+                    _buildDivider(context),
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.credit_card_outlined,
+                      title: 'My Cards',
+                      onTap: () {},
+                    ),
+                    _buildDivider(context),
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.history_outlined,
+                      title: 'Transaction History',
+                      onTap: () {},
+                    ),
+                    _buildDivider(context),
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.notifications_outlined,
+                      title: 'Notifications',
                       onTap: () {},
                     ),
                   ],
+                ),
+              ),
+
+              // Logout Button
+              Container(
+                margin: EdgeInsets.all(16.w),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Handle logout
+                    context.read<AuthProvider>().logout();
+                    context.go('/login');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.surface,
+                    foregroundColor: colorScheme.error,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      side: BorderSide(color: colorScheme.error.withAlpha(128)), // 0.5 * 255 ≈ 128
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout, size: 20.sp),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Logout',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Footer Links
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 16.w),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildFooterLink(context, 'Help & Support', () {}),
+                    SizedBox(width: 16.w),
+                    _buildFooterLink(context, 'Terms of Service', () {}),
+                    SizedBox(width: 16.w),
+                    _buildFooterLink(context, 'Privacy Policy', () {}),
+                  ],
+                ),
+              ),
+
+              // Version
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 16.h),
+                  child: Text(
+                    'Version 1.0.0',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: colorScheme.onSurface.withAlpha(128), // 0.5 * 255 ≈ 128
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -210,96 +241,88 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class _ProfileOption extends StatelessWidget {
-  final IconData icon;
-  final String title;
-
-  const _ProfileOption({
-    required this.icon,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  // Build menu item widget
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: () {},
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-        child: Row(
-          children: [
-            Container(
-              width: 40.w,
-              height: 40.w,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                borderRadius: BorderRadius.circular(12.r),
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+          child: Row(
+            children: [
+              Container(
+                width: 36.w,
+                height: 36.w,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withAlpha(26), // 0.1 * 255 ≈ 26
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 20.sp,
+                  color: colorScheme.primary,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: theme.colorScheme.primary,
-                size: 20.sp,
-              ),
-            ),
-            SizedBox(width: 16.w),
-            Expanded(
-              child: Text(
+              SizedBox(width: 16.w),
+              Text(
                 title,
                 style: TextStyle(
                   fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurface,
                 ),
               ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 16.sp,
-              color: theme.hintColor,
-            ),
-          ],
+              const Spacer(),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16.sp,
+                color: colorScheme.onSurface.withAlpha(128), // 0.5 * 255 ≈ 128
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _ProfileDivider extends StatelessWidget {
-  const _ProfileDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      height: 0,
-      thickness: 1,
-      indent: 20.w,
-      endIndent: 20.w,
-      color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round()),
+  // Build divider widget
+  Widget _buildDivider(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Divider(
+        height: 1,
+        thickness: 1,
+        color: theme.div s or.withAlpha(26), // 0.1 * 255 ≈ 26
+      ),
     );
   }
-}
 
-class _FooterLink extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _FooterLink({
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  // Build footer link widget
+  Widget _buildFooterLink(
+    BuildContext context, 
+    String text, 
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Text(
-        label,
+        text,
         style: TextStyle(
           fontSize: 12.sp,
+          color: Theme.of(context).colorScheme.onSurface.withAlpha(153), // 0.6 * 255 ≈ 153
           fontWeight: FontWeight.w500,
-          color: Theme.of(context).colorScheme.primary,
-          decoration: TextDecoration.underline,
         ),
       ),
     );

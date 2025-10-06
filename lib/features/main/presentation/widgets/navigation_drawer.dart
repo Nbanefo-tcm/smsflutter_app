@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../profile/presentation/screens/profile_screen.dart';
 
 class AppNavigationDrawer extends StatelessWidget {
   const AppNavigationDrawer({super.key});
@@ -160,10 +161,25 @@ class AppNavigationDrawer extends StatelessWidget {
                   icon: Icons.person_outline,
                   title: 'Profile',
                   onTap: () {
+                    debugPrint('Profile tapped');
                     Navigator.of(context).pop();
                     final currentRoute = ModalRoute.of(context)?.settings.name;
+                    debugPrint('Current route before navigation: $currentRoute');
                     if (currentRoute != '/profile') {
-                      Navigator.of(context).pushNamed('/profile');
+                      debugPrint('Attempting to navigate to /profile');
+                      try {
+                        Navigator.of(context).pushNamed('/profile');
+                        debugPrint('Navigation to /profile successful');
+                      } catch (e) {
+                        debugPrint('Error navigating to /profile: $e');
+                        // Fallback navigation
+                        debugPrint('Attempting fallback navigation');
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                        );
+                      }
+                    } else {
+                      debugPrint('Already on profile screen');
                     }
                   },
                 ),

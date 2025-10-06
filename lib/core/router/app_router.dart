@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../features/auth/presentation/screens/login_screen.dart';
 import '../../../features/main/presentation/screens/main_screen.dart';
+import '../../../features/main/presentation/widgets/dashboard_page.dart' as dashboard;
 import '../../../features/sms/presentation/screens/sms_inbox_screen.dart';
 import '../../../features/wallet/presentation/screens/fund_wallet_screen.dart';
 import '../../../features/profile/presentation/screens/profile_screen.dart';
@@ -28,6 +29,7 @@ class AppRouter {
       return null;
     },
     routes: [
+      // Login route (outside shell)
       GoRoute(
         path: '/login',
         name: 'login',
@@ -36,40 +38,58 @@ class AppRouter {
           child: const LoginScreen(),
         ),
       ),
+      
+      // Main shell route (all authenticated routes go here)
       ShellRoute(
         builder: (context, state, child) => MainScreen(content: child),
         routes: [
-          // Empty route that will be handled by MainScreen's _buildHomeContent
+          // Dashboard (home) route
           GoRoute(
             path: '/',
             name: 'home',
             pageBuilder: (context, state) => MaterialPage(
               key: state.pageKey,
-              child: const SizedBox.shrink(),
+              child: const dashboard.DashboardPage(),
             ),
           ),
+          
+          // Inbox route
           GoRoute(
-            path: '/sms-inbox',
-            name: 'sms-inbox',
+            path: '/inbox',
+            name: 'inbox',
             pageBuilder: (context, state) => MaterialPage(
               key: state.pageKey,
               child: const SmsInboxScreen(),
             ),
           ),
+          
+          // Numbers route
           GoRoute(
-            path: '/fund-wallet',
-            name: 'fund-wallet',
+            path: '/numbers',
+            name: 'numbers',
             pageBuilder: (context, state) => MaterialPage(
               key: state.pageKey,
-              child: const FundWalletScreen(),
+              child: const Center(child: Text('Numbers')),
             ),
           ),
+          
+          // Profile route (using ProfileScreen instead of placeholder)
           GoRoute(
             path: '/profile',
             name: 'profile',
             pageBuilder: (context, state) => MaterialPage(
               key: state.pageKey,
               child: const ProfileScreen(),
+            ),
+          ),
+          
+          // Fund Wallet route
+          GoRoute(
+            path: '/fund-wallet',
+            name: 'fund-wallet',
+            pageBuilder: (context, state) => MaterialPage(
+              key: state.pageKey,
+              child: const FundWalletScreen(),
             ),
           ),
         ],
