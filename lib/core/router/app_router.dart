@@ -6,6 +6,7 @@ import '../../../features/auth/presentation/screens/login_screen.dart';
 import '../../../features/main/presentation/screens/main_screen.dart';
 import '../../../features/main/presentation/widgets/dashboard_page.dart' as dashboard;
 import '../../../features/sms/presentation/screens/sms_inbox_screen.dart';
+import '../../../features/transactions/presentation/screens/transactions_screen.dart';
 import '../../../features/wallet/presentation/screens/fund_wallet_screen.dart';
 import '../../../features/profile/presentation/screens/profile_screen.dart';
 import '../../../features/auth/presentation/providers/auth_provider.dart';
@@ -50,6 +51,16 @@ class AppRouter {
             pageBuilder: (context, state) => MaterialPage(
               key: state.pageKey,
               child: const dashboard.DashboardPage(),
+            ),
+          ),
+          
+          // Transactions route
+          GoRoute(
+            path: '/transactions',
+            name: 'transactions',
+            pageBuilder: (context, state) => MaterialPage(
+              key: state.pageKey,
+              child: const TransactionsScreen(),
             ),
           ),
           

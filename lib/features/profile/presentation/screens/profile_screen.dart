@@ -304,7 +304,7 @@ class ProfileScreen extends StatelessWidget {
       child: Divider(
         height: 1,
         thickness: 1,
-        color: theme.div s or.withAlpha(26), // 0.1 * 255 ≈ 26
+        color: theme.dividerColor.withOpacity(0.1),
       ),
     );
   }

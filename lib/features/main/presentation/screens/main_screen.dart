@@ -5,6 +5,7 @@ import '../../../../core/widgets/theme_selector.dart';
 import '../../../../core/widgets/profile_avatar_button.dart';
 import '../widgets/navigation_drawer.dart';
 import '../widgets/dashboard_page.dart' as dashboard;
+import '../../../transactions/presentation/screens/transactions_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final Widget? content;
@@ -24,8 +25,8 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const dashboard.DashboardPage(),
+    const TransactionsScreen(),
     const Center(child: Text('SMS')),
-    const Center(child: Text('Transactions')),
     const Center(child: Text('Rent')),
     const Center(child: Text('eSIM')),
   ];
@@ -37,14 +38,14 @@ class _MainScreenState extends State<MainScreen> {
       label: 'Home',
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.sms_outlined),
-      activeIcon: Icon(Icons.sms),
-      label: 'SMS',
-    ),
-    BottomNavigationBarItem(
       icon: Icon(Icons.receipt_long_outlined),
       activeIcon: Icon(Icons.receipt_long),
       label: 'Transactions',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.sms_outlined),
+      activeIcon: Icon(Icons.sms),
+      label: 'SMS',
     ),
     BottomNavigationBarItem(
       icon: Icon(Icons.paid_outlined),
@@ -59,6 +60,9 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   void _onItemTapped(int index) {
+    // Don't update if already on the same tab
+    if (_selectedIndex == index) return;
+    
     setState(() {
       _selectedIndex = index;
     });
@@ -69,9 +73,9 @@ class _MainScreenState extends State<MainScreen> {
     }
     
     // Update the URL to match the selected tab
-    final routes = ['/', '/sms', '/transactions', '/rent', '/esim'];
+    final routes = ['/', '/transactions', '/sms', '/rent', '/esim'];
     if (index < routes.length) {
-      GoRouter.of(context).go(routes[index]);
+      context.go(routes[index]);
     }
   }
 

@@ -36,12 +36,18 @@ class ThemeProvider extends ChangeNotifier {
   Future<void> _loadThemeMode() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final themeModeIndex = prefs.getInt(_themeModeKey) ?? 0; // Default to light
-      _themeMode = ThemeMode.values[themeModeIndex];
+      final themeModeIndex = prefs.getInt(_themeModeKey);
+      if (themeModeIndex != null) {
+        _themeMode = ThemeMode.values[themeModeIndex];
+      } else {
+        // Default to system theme if no preference is set
+        _themeMode = ThemeMode.system;
+      }
       notifyListeners();
     } catch (e) {
       // If there's an error loading preferences, use system default
       _themeMode = ThemeMode.system;
+      notifyListeners();
     }
   }
 

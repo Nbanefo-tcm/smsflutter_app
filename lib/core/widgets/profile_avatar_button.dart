@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileAvatarButton extends StatelessWidget {
   final double size;
@@ -16,9 +17,9 @@ class ProfileAvatarButton extends StatelessWidget {
   });
 
   void _goToProfile(BuildContext context) {
-    final currentRoute = ModalRoute.of(context)?.settings.name;
+    final currentRoute = GoRouterState.of(context).matchedLocation;
     if (currentRoute == '/profile') return;
-    Navigator.of(context).pushNamed('/profile');
+    context.push('/profile');
   }
 
   @override
