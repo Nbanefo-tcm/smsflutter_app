@@ -5,7 +5,7 @@ import '../../../../core/widgets/theme_selector.dart';
 import '../../../../core/widgets/profile_avatar_button.dart';
 import '../widgets/navigation_drawer.dart';
 import '../widgets/dashboard_page.dart' as dashboard;
-import '../../../transactions/presentation/screens/transactions_screen.dart';
+import '../../../transactions/presentation/screens/transactions_screen_fixed.dart';
 
 class MainScreen extends StatefulWidget {
   final Widget? content;
