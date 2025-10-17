@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+// Define route name to avoid direct import
+const String transactionsRoute = '/transactions';
+const String mainRoute = '/';
 
 // Enum for transaction status
 enum TransactionStatus {
@@ -54,7 +59,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   final List<Transaction> _transactions = const [
     Transaction(
       id: 'TXN-12345',
-      serviceName: 'Airtime Purchase',
+      serviceName: 'Paystack',
       amount: '₦1,500',
       dateTime: 'Today, 2:30 PM',
       status: TransactionStatus.success,
@@ -62,7 +67,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     ),
     Transaction(
       id: 'TXN-12346',
-      serviceName: 'Data Bundle',
+      serviceName: 'Plenty Of Fish',
       amount: '₦2,500',
       dateTime: 'Yesterday, 4:15 PM',
       status: TransactionStatus.success,
@@ -70,11 +75,43 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     ),
     Transaction(
       id: 'TXN-12347',
-      serviceName: 'Electricity Bill',
+      serviceName: 'Paystack',
       amount: '₦5,000',
       dateTime: 'Oct 5, 10:30 AM',
       status: TransactionStatus.failed,
       icon: Icons.bolt,
+    ),
+    Transaction(
+      id: 'TXN-12348',
+      serviceName: 'Match.com',
+      amount: '₦3,500',
+      dateTime: 'Oct 4, 8:45 PM',
+      status: TransactionStatus.success,
+      icon: Icons.tv,
+    ),
+    Transaction(
+      id: 'TXN-12349',
+      serviceName: 'Google/ Gmail/ Youtube',
+      amount: '₦2,000',
+      dateTime: 'Oct 3, 11:20 AM',
+      status: TransactionStatus.refunded,
+      icon: Icons.wifi,
+    ),
+    Transaction(
+      id: 'TXN-12350',
+      serviceName: 'Paystack',
+      amount: '₦2,800',
+      dateTime: 'Oct 2, 3:15 PM',
+      status: TransactionStatus.success,
+      icon: Icons.water_drop,
+    ),
+    Transaction(
+      id: 'TXN-12351',
+      serviceName: 'Fund Transfer',
+      amount: '₦50,000',
+      dateTime: 'Oct 1, 9:30 AM',
+      status: TransactionStatus.success,
+      icon: Icons.swap_horiz,
     ),
   ];
 
@@ -218,7 +255,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            // Get the current route and pop if possible
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              // Use GoRouter to navigate to the home screen
+              // This is needed because the app uses go_router for navigation
+              GoRouter.of(context).go('/');
+            }
+          },
         ),
         actions: [
           IconButton(
@@ -282,9 +328,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1,
+      elevation: 2,
+      color: isLightMode ? Colors.blue[100] : null, // More prominent blue in light mode
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: isLightMode 
+            ? BorderSide(color: Colors.blue[300]!, width: 1.5) // Add blue border in light mode
+            : BorderSide.none,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),

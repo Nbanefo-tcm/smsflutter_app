@@ -97,10 +97,13 @@ class AppNavigationDrawer extends StatelessWidget {
                 _buildMenuItem(
                   context,
                   icon: Icons.swap_horiz_outlined,
-                  title: 'Transaction',
+                  title: 'Transactions',
                   onTap: () {
                     Navigator.of(context).pop();
-                    _showComingSoon(context, 'Transaction');
+                    final currentRoute = ModalRoute.of(context)?.settings.name;
+                    if (currentRoute != '/transactions') {
+                      Navigator.of(context).pushReplacementNamed('/transactions');
+                    }
                   },
                 ),
                 _buildMenuItem(

@@ -36,16 +36,19 @@ class _MainScreenState extends State<MainScreen> {
       icon: Icon(Icons.home_outlined),
       activeIcon: Icon(Icons.home),
       label: 'Home',
+      tooltip: 'Home',
     ),
     BottomNavigationBarItem(
       icon: Icon(Icons.receipt_long_outlined),
       activeIcon: Icon(Icons.receipt_long),
       label: 'Transactions',
+      tooltip: 'Transactions',
     ),
     BottomNavigationBarItem(
       icon: Icon(Icons.sms_outlined),
       activeIcon: Icon(Icons.sms),
       label: 'SMS',
+      tooltip: 'SMS',
     ),
     BottomNavigationBarItem(
       icon: Icon(Icons.paid_outlined),

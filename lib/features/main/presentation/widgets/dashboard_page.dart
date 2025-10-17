@@ -215,6 +215,9 @@ class DashboardPage extends StatelessWidget {
                   'Recent Transactions',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: Theme.of(context).brightness == Brightness.dark 
+                            ? Colors.white 
+                            : Theme.of(context).textTheme.titleMedium?.color,
                       ),
                 ),
                 TextButton(
@@ -247,7 +250,7 @@ class DashboardPage extends StatelessWidget {
             separatorBuilder: (context, index) => Divider(
               height: 1,
               thickness: 1,
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
+              color: Theme.of(context).dividerColor.withAlpha(26), // ~10% opacity
             ),
             itemBuilder: (context, index) {
               final transaction = recentTransactions[index];
@@ -276,7 +279,7 @@ class DashboardPage extends StatelessWidget {
                 subtitle: Text(
                   DateFormat('MMM d, y • h:mm a').format(transaction['date']),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).hintColor,
+                        color: Theme.of(context).hintColor.withOpacity(0.7), // ~70% opacity
                       ),
                 ),
                 trailing: Text(

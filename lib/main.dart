@@ -7,6 +7,7 @@ import 'core/providers/theme_provider.dart';
 import 'core/router/app_router.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/sms/presentation/providers/sms_provider.dart';
+import 'features/transactions/presentation/providers/transactions_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,7 @@ class MyApp extends StatelessWidget {
               create: (_) => AuthProvider(apiClient: ApiClient()),
             ),
             ChangeNotifierProvider(create: (_) => SmsProvider()),
+            ChangeNotifierProvider(create: (_) => TransactionsProvider()..initializeWithSampleData()),
           ],
           child: Consumer<ThemeProvider>(
             builder: (context, themeProvider, child) {
